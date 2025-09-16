@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Aptitude Generator{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center py-5">
+    <h1 class="display-4">Welcome to Aptitude Generator</h1>
+    <p class="lead">Practice and improve your aptitude skills with our interactive platform.</p>
+    <hr class="my-4">
+    <p>Get started by creating an account or logging in.</p>
+    <div class="mt-4">
+        <a class="btn btn-primary btn-lg me-2" href="{{ url_for('auth.register') }}" role="button">Sign Up</a>
+        <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('auth.login') }}" role="button">Login</a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <h3>Practice Questions</h3>
+        <p>Access a wide variety of aptitude questions with detailed solutions.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>Track Progress</h3>
+        <p>Monitor your improvement with detailed analytics and progress tracking.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>Learn & Improve</h3>
+        <p>Get personalized recommendations to help you improve your skills.</p>
+    </div>
+</div>
+{% endblock %}
