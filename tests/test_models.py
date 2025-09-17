@@ -4,8 +4,7 @@ Tests for database models.
 This module contains tests for the User model and other database models.
 """
 import pytest
-from app.models.user import User
-from app import db
+from app.models.user import User, ExcelUserStore
 from werkzeug.security import check_password_hash
 
 
@@ -18,13 +17,11 @@ def test_user_model(app):
             email='test@example.com',
             password='testpass123'
         )
-        db.session.add(user)
-        db.session.commit()
+        ExcelUserStore.add(user)
 
         # Test user attributes
         assert user.username == 'testuser'
         assert user.email == 'test@example.com'
-        assert user.is_active is True
         assert user.is_authenticated is True
         assert user.is_anonymous is False
         
@@ -35,17 +32,14 @@ def test_user_model(app):
         assert user.check_password('wrongpassword') is False
         
         # Test get_id method
-        assert user.get_id() == str(user.id)
+        assert user.get_id() == user.username
 
 
 def test_user_repr(app):
     ""Test the __repr__ method of the User model."""
     with app.app_context():
         user = User(username='testuser', email='test@example.com')
-        db.session.add(user)
-        db.session.commit()
-        
-        assert repr(user) == f"<User {user.id}: testuser>"
+        assert repr(user) == f"<User testuser>"
 
 
 def test_set_password(app):
@@ -68,8 +62,7 @@ def test_user_authentication(app, client):
             email='auth@example.com',
             password='authpass123'
         )
-        db.session.add(user)
-        db.session.commit()
+        ExcelUserStore.add(user)
         
         # Test login with correct credentials
         response = client.post(

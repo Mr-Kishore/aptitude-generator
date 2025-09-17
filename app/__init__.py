@@ -6,20 +6,16 @@ This module initializes the Flask application and its extensions.
 import os
 from flask import Flask
 from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate
 from dotenv import load_dotenv
 
-# Initialize extensions
-db = SQLAlchemy()
+# Initialize extensions (no database)
 login_manager = LoginManager()
 csrf = CSRFProtect()
-migrate = Migrate()
 
 # Import models to ensure they are registered with SQLAlchemy
 # This import must come after db initialization to avoid circular imports
-from app.models.user import User  # noqa
+from app.models.user import User, UserStore, ExcelUserStore  # noqa
 
 # Import blueprints to register routes
 from . import auth, main  # noqa
@@ -39,11 +35,6 @@ def create_app(config=None):
     # Default configuration
     app.config.update(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-key-change-in-production'),
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'DATABASE_URL',
-            f"sqlite:///{os.path.join(app.instance_path, 'app.db')}"
-        ),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
         WTF_CSRF_ENABLED=True,
     )
     
@@ -61,10 +52,8 @@ def create_app(config=None):
         pass
     
     # Initialize extensions
-    db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    migrate.init_app(app, db)
     
     # Configure login manager
     login_manager.login_view = 'auth.login'
@@ -83,17 +72,22 @@ def create_app(config=None):
     from .utils import filters
     filters.init_filters(app)
     
-    # Create database tables
-    with app.app_context():
-        db.create_all()
+    # No database initialization required
     
     # Import and register CLI commands
     from . import cli
     cli.init_app(app)
     
-    # User loader for Flask-Login
+    # User loader for Flask-Login (use in-memory store)
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, int(user_id))
+        # Prefer Excel-backed store if available
+        try:
+            user = ExcelUserStore.get_by_username(user_id)
+            if user:
+                return user
+        except Exception:
+            pass
+        return UserStore.get_by_username(user_id)
     
     return app

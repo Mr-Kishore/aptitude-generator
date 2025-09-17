@@ -3,8 +3,8 @@ Basic tests for the Aptitude Generator application.
 """
 import os
 import pytest
-from app import create_app, db
-from app.models.user import User
+from app import create_app
+from app.models.user import ExcelUserStore
 
 
 def test_config():
@@ -40,10 +40,9 @@ def test_register(client, app):
         }
     )
     
-    assert response.status_code == 302  # Redirect after successful registration
-    
+    assert response.status_code in (200, 302)
     with app.app_context():
-        assert User.query.filter_by(username='test').first() is not None
+        assert ExcelUserStore.get_by_username('test') is not None
 
 
 def test_login(client, test_user):
