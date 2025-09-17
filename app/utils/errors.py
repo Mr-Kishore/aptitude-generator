@@ -87,22 +87,18 @@ def init_error_handlers(app):
     app.register_error_handler(405, method_not_allowed)
     app.register_error_handler(500, internal_error_handler)
     
-    # Register error handlers for SQLAlchemy exceptions only if SQLAlchemy is installed
-    try:
-        from sqlalchemy.exc import IntegrityError, SQLAlchemyError  # type: ignore
-
-        @app.errorhandler(IntegrityError)
-        def handle_integrity_error(e):
-            # No DB session available in this project; return appropriate response only
-            return bad_request('A database integrity error occurred.')
-
-        @app.errorhandler(SQLAlchemyError)
-        def handle_sqlalchemy_error(e):
-            # No DB session available in this project; return appropriate response only
-            return internal_error('A database error occurred.')
-    except Exception:
-        # SQLAlchemy not installed or not used; skip registering DB-specific handlers
-        pass
+    # Register error handlers for common exceptions
+    from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+    
+    @app.errorhandler(IntegrityError)
+    def handle_integrity_error(e):
+        db.session.rollback()
+        return bad_request('A database integrity error occurred.')
+    
+    @app.errorhandler(SQLAlchemyError)
+    def handle_sqlalchemy_error(e):
+        db.session.rollback()
+        return internal_error('A database error occurred.')
     
     @app.errorhandler(Exception)
     def handle_generic_exception(e):

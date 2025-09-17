@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - MindForge{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="card-title mb-2">{{ user.username }}</h1>
+                            <p class="card-text mb-1">
+                                <i class="bi bi-envelope"></i> {{ user.email }}
+                            </p>
+                            <p class="card-text mb-0">
+                                <i class="bi bi-calendar"></i> Member since {{ user.created_at.strftime('%B %d, %Y') }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a href="{{ url_for('main.edit_account') }}" class="btn btn-light">
+                                <i class="bi bi-pencil"></i> Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ overall_stats.total_questions_attempted }}</h3>
+                    <p class="card-text">Questions Attempted</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ "%.1f"|format(overall_stats.overall_accuracy) }}%</h3>
+                    <p class="card-text">Overall Accuracy</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ categories_started }}/{{ total_categories }}</h3>
+                    <p class="card-text">Categories Started</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ study_streak }}</h3>
+                    <p class="card-text">Study Streak (Days)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Overall Progress</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Progress</span>
+                            <span>{{ "%.1f"|format(overall_stats.overall_accuracy) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                 style="width: {{ "%.1f"|format(overall_stats.overall_accuracy) }}%;" 
+                                 aria-valuenow="{{ "%.1f"|format(overall_stats.overall_accuracy) }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ "%.1f"|format(overall_stats.overall_accuracy) }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h6 class="text-primary">{{ overall_stats.total_questions_correct }}</h6>
+                            <small class="text-muted">Correct Answers</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="text-info">{{ categories_started }}</h6>
+                            <small class="text-muted">Categories Started</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="text-success">{{ categories_completed }}</h6>
+                            <small class="text-muted">Categories Completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.practice') }}" class="btn btn-primary">
+                            <i class="bi bi-play-circle"></i> Continue Practicing
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-speedometer2"></i> View Dashboard
+                        </a>
+                        <a href="{{ url_for('main.edit_account') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear"></i> Account Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Progress -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Category Progress</h5>
+                    <div class="row">
+                        {% for category in category_progress %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ category.title }}</h6>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Progress</small>
+                                            <small>{{ "%.0f"|format(category.completion_percentage) }}%</small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ "%.1f"|format(category.completion_percentage) }}%;" 
+                                                 aria-valuenow="{{ "%.1f"|format(category.completion_percentage) }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Accuracy Bar -->
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Accuracy</small>
+                                            <small>{{ "%.1f"|format(category.accuracy_percentage) }}%</small>
+                                        </div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {{ "%.1f"|format(category.accuracy_percentage) }}%;" 
+                                                 aria-valuenow="{{ "%.1f"|format(category.accuracy_percentage) }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Stats -->
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <small class="text-muted">
+                                            {{ category.questions_attempted }} attempted
+                                        </small>
+                                        <small class="text-muted">
+                                            {{ category.questions_correct }} correct
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Action Button -->
+                                    <div class="mt-auto">
+                                        <a href="{{ url_for('main.practice_topic', slug=category.slug) }}" 
+                                           class="btn btn-sm btn-outline-primary w-100">
+                                            {% if category.questions_attempted > 0 %}
+                                                <i class="bi bi-arrow-clockwise"></i> Continue
+                                            {% else %}
+                                                <i class="bi bi-play"></i> Start
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Activity</h5>
+                    {% if recent_activities %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activities %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ activity.description }}</h6>
+                                    <small class="text-muted">
+                                        {{ activity.timestamp[:10] }} at {{ activity.timestamp[11:16] }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ activity.score }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-clock-history text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">No recent activity. Start practicing to see your progress here!</p>
+                            <a href="{{ url_for('main.practice') }}" class="btn btn-primary">Start Practicing</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -19,7 +19,10 @@
                                 <strong>Email:</strong> {{ user.email }}<br>
                                 <strong>Member since:</strong> {{ user.created_at.strftime('%B %d, %Y') }}
                             </p>
-                            <a href="{{ url_for('main.edit_account') }}" class="btn btn-outline-primary">Edit Profile</a>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary">View Profile</a>
+                                <a href="{{ url_for('main.edit_account') }}" class="btn btn-outline-secondary btn-sm">Edit Account</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -28,11 +31,25 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Your Progress</h5>
-                            <div class="progress mb-3">
-                                <div class="progress-bar" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100">{{ progress_percent }}%</div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Overall Progress</span>
+                                    <span>{{ "%.1f"|format(overall_stats.overall_accuracy) }}% accuracy</span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ "%.1f"|format(overall_stats.overall_accuracy) }}%;" 
+                                         aria-valuenow="{{ "%.1f"|format(overall_stats.overall_accuracy) }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ "%.1f"|format(overall_stats.overall_accuracy) }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ overall_stats.total_questions_attempted }} questions attempted across 
+                                    {{ overall_stats.categories_started }} categories
+                                </small>
                             </div>
-                            <p>You've completed {{ completed_tests }} out of {{ total_tests }} practice tests.</p>
-                            <a href="#" class="btn btn-primary">Continue Practicing</a>
+                            <a href="{{ url_for('main.practice') }}" class="btn btn-primary">Continue Practicing</a>
                         </div>
                     </div>
                 </div>
@@ -44,9 +61,9 @@
                         <div class="card-body">
                             <h5 class="card-title">Recent Activity</h5>
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item">Completed Practice Test #1 - 80%</li>
-                                <li class="list-group-item">Started Quantitative Aptitude Module</li>
-                                <li class="list-group-item">Created an account</li>
+                                {% for activity in recent_activities %}
+                                <li class="list-group-item">{{ activity }}</li>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
@@ -60,7 +77,73 @@
                                 <a href="{{ url_for('main.practice') }}" target="_blank" class="btn btn-outline-secondary">Start Forging</a>
                                 <a href="#" class="btn btn-outline-secondary">Review Past Results</a>
                                 <a href="#" class="btn btn-outline-secondary">View Study Materials</a>
-                                <a href="#" class="btn btn-outline-secondary">Update Account Settings</a>
+                                <a href="{{ url_for('main.edit_account') }}" class="btn btn-outline-secondary">Update Account Settings</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Category Progress Section -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Progress</h5>
+                            <div class="row">
+                                {% for category in category_progress %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ category.title }}</h6>
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <small>Progress</small>
+                                                    <small>{{ "%.0f"|format(category.completion_percentage) }}%</small>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                         style="width: {{ "%.1f"|format(category.completion_percentage) }}%;" 
+                                                         aria-valuenow="{{ "%.1f"|format(category.completion_percentage) }}" 
+                                                         aria-valuemin="0" aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <small>Accuracy</small>
+                                                    <small>{{ "%.1f"|format(category.accuracy_percentage) }}%</small>
+                                                </div>
+                                                <div class="progress" style="height: 4px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" 
+                                                         style="width: {{ "%.1f"|format(category.accuracy_percentage) }}%;" 
+                                                         aria-valuenow="{{ "%.1f"|format(category.accuracy_percentage) }}" 
+                                                         aria-valuemin="0" aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <small class="text-muted">
+                                                    {{ category.questions_attempted }} attempted
+                                                </small>
+                                                <small class="text-muted">
+                                                    {{ category.questions_correct }} correct
+                                                </small>
+                                            </div>
+                                            <div class="mt-2">
+                                                <a href="{{ url_for('main.practice_topic', slug=category.slug) }}" 
+                                                   class="btn btn-sm btn-outline-primary w-100">
+                                                    {% if category.questions_attempted > 0 %}
+                                                        Continue
+                                                    {% else %}
+                                                        Start
+                                                    {% endif %}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>

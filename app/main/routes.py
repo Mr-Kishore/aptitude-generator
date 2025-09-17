@@ -6,6 +6,7 @@ This module contains the main application routes for the Aptitude Generator.
 from flask import render_template, redirect, url_for, request, flash, abort
 from flask_login import login_required, current_user
 from app.models.user import User, ExcelUserStore, UserStore
+from app.models.progress import progress_store
 import os
 import re
 from . import bp
@@ -29,16 +30,58 @@ def about():
 @login_required
 def dashboard():
     """Render the user dashboard."""
-    # TODO: Replace with real stats when practice tests are implemented
-    progress_percent = 0
-    completed_tests = 0
-    total_tests = 0
+    # Get user progress data
+    user_progress = progress_store.get_user_progress(current_user.username)
+    overall_stats = user_progress.get_overall_progress()
+    
+    # Define all available categories
+    categories = [
+        {'title': 'Numerical Aptitude', 'slug': 'numerical-aptitude'},
+        {'title': 'Verbal Aptitude', 'slug': 'verbal-aptitude'},
+        {'title': 'Abstract / Logical Reasoning Aptitude', 'slug': 'abstract-logical-reasoning-aptitude'},
+        {'title': 'Mechanical Aptitude', 'slug': 'mechanical-aptitude'},
+        {'title': 'Spatial Aptitude', 'slug': 'spatial-aptitude'},
+        {'title': 'Clerical / Perceptual Aptitude', 'slug': 'clerical-perceptual-aptitude'},
+        {'title': 'Technical Aptitude', 'slug': 'technical-aptitude'},
+        {'title': 'Creativity Aptitude', 'slug': 'creativity-aptitude'},
+        {'title': 'Social / Emotional Aptitude', 'slug': 'social-emotional-aptitude'},
+        {'title': 'Career-specific Aptitude Tests', 'slug': 'career-specific-aptitude-tests'},
+    ]
+    
+    # Get progress for each category
+    category_progress = []
+    for category in categories:
+        progress = user_progress.get_category_progress(category['slug'])
+        category_progress.append({
+            'title': category['title'],
+            'slug': category['slug'],
+            'questions_attempted': progress.questions_attempted,
+            'questions_correct': progress.questions_correct,
+            'accuracy_percentage': progress.accuracy_percentage,
+            'completion_percentage': progress.completion_percentage,
+            'last_attempted': progress.last_attempted
+        })
+    
+    # Get recent activities from progress data
+    recent_activities = []
+    
+    # Add quiz completion activities (most recent first)
+    for activity in reversed(user_progress.activities[-5:]):  # Show last 5 activities
+        if activity['type'] == 'quiz_completed':
+            # Get category title from slug
+            category_title = next((cat['title'] for cat in categories if cat['slug'] == activity['category_slug']), activity['category_slug'])
+            recent_activities.append(f"Completed {category_title} - {activity['score']}")
+    
+    # If no activities, show account creation
+    if not recent_activities:
+        recent_activities = ["Created an account"]
+    
     return render_template(
         'dashboard.html',
         user=current_user,
-        progress_percent=progress_percent,
-        completed_tests=completed_tests,
-        total_tests=total_tests,
+        overall_stats=overall_stats,
+        category_progress=category_progress,
+        recent_activities=recent_activities,
     )
 
 
@@ -109,6 +152,86 @@ def edit_account():
         return redirect(url_for('main.dashboard'))
 
     return render_template('account_edit.html', user=current_user)
+
+
+@bp.route('/profile')
+@login_required
+def profile():
+    """Show user profile with detailed statistics."""
+    # Get user progress data
+    user_progress = progress_store.get_user_progress(current_user.username)
+    overall_stats = user_progress.get_overall_progress()
+    
+    # Define all available categories
+    categories = [
+        {'title': 'Numerical Aptitude', 'slug': 'numerical-aptitude'},
+        {'title': 'Verbal Aptitude', 'slug': 'verbal-aptitude'},
+        {'title': 'Abstract / Logical Reasoning Aptitude', 'slug': 'abstract-logical-reasoning-aptitude'},
+        {'title': 'Mechanical Aptitude', 'slug': 'mechanical-aptitude'},
+        {'title': 'Spatial Aptitude', 'slug': 'spatial-aptitude'},
+        {'title': 'Clerical / Perceptual Aptitude', 'slug': 'clerical-perceptual-aptitude'},
+        {'title': 'Technical Aptitude', 'slug': 'technical-aptitude'},
+        {'title': 'Creativity Aptitude', 'slug': 'creativity-aptitude'},
+        {'title': 'Social / Emotional Aptitude', 'slug': 'social-emotional-aptitude'},
+        {'title': 'Career-specific Aptitude Tests', 'slug': 'career-specific-aptitude-tests'},
+    ]
+    
+    # Get detailed progress for each category
+    category_progress = []
+    for category in categories:
+        progress = user_progress.get_category_progress(category['slug'])
+        category_progress.append({
+            'title': category['title'],
+            'slug': category['slug'],
+            'questions_attempted': progress.questions_attempted,
+            'questions_correct': progress.questions_correct,
+            'accuracy_percentage': progress.accuracy_percentage,
+            'completion_percentage': progress.completion_percentage,
+            'last_attempted': progress.last_attempted
+        })
+    
+    # Get recent activities
+    recent_activities = []
+    for activity in reversed(user_progress.activities[-10:]):  # Show last 10 activities
+        if activity['type'] == 'quiz_completed':
+            category_title = next((cat['title'] for cat in categories if cat['slug'] == activity['category_slug']), activity['category_slug'])
+            recent_activities.append({
+                'type': 'quiz_completed',
+                'description': f"Completed {category_title}",
+                'score': activity['score'],
+                'timestamp': activity['timestamp']
+            })
+    
+    # Calculate additional statistics
+    total_categories = len(categories)
+    categories_started = len([cat for cat in category_progress if cat['questions_attempted'] > 0])
+    categories_completed = len([cat for cat in category_progress if cat['completion_percentage'] >= 100])
+    
+    # Calculate study streak (simplified - based on recent activities)
+    study_streak = 0
+    if recent_activities:
+        # Simple streak calculation based on consecutive days with activities
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        current_date = today
+        
+        for activity in reversed(recent_activities):
+            activity_date = datetime.fromisoformat(activity['timestamp']).date()
+            if activity_date == current_date:
+                study_streak += 1
+                current_date -= timedelta(days=1)
+            elif activity_date < current_date:
+                break
+    
+    return render_template('profile.html',
+                         user=current_user,
+                         overall_stats=overall_stats,
+                         category_progress=category_progress,
+                         recent_activities=recent_activities,
+                         total_categories=total_categories,
+                         categories_started=categories_started,
+                         categories_completed=categories_completed,
+                         study_streak=study_streak)
 
 
 @bp.route('/practice')
@@ -191,4 +314,63 @@ def practice_topic(slug: str):
     with open(md_path, 'r', encoding='utf-8') as f:
         md_text = f.read()
     questions = _parse_mcq_markdown(md_text)
-    return render_template('practice_topic.html', questions=questions, slug=slug)
+    
+    # Get user's current progress for this category
+    user_progress = progress_store.get_user_progress(current_user.username)
+    category_progress = user_progress.get_category_progress(slug)
+    
+    return render_template('practice_topic.html', 
+                         questions=questions, 
+                         slug=slug,
+                         category_progress=category_progress)
+
+
+@bp.route('/practice/<slug>/submit', methods=['POST'])
+@login_required
+def submit_practice(slug: str):
+    """Handle quiz submission and update user progress."""
+    print(f"DEBUG: Submit practice called for slug: {slug}")
+    print(f"DEBUG: Form data: {dict(request.form)}")
+    
+    base_dir = os.path.join(os.path.dirname(__file__), '..', 'content')
+    md_path = os.path.abspath(os.path.join(base_dir, f"{slug}.md"))
+    
+    # Ensure the path is within the content directory
+    if not md_path.startswith(os.path.abspath(base_dir)):
+        abort(404)
+    if not os.path.exists(md_path):
+        abort(404)
+
+    with open(md_path, 'r', encoding='utf-8') as f:
+        md_text = f.read()
+    questions = _parse_mcq_markdown(md_text)
+    
+    print(f"DEBUG: Found {len(questions)} questions")
+    
+    # Calculate results
+    correct_answers = 0
+    total_questions = len(questions)
+    
+    for i, question in enumerate(questions):
+        user_answer = request.form.get(f'question_{i}')
+        print(f"DEBUG: Question {i}: user_answer={user_answer}, correct_answer={question['answer']}")
+        if user_answer and user_answer.upper() == question['answer']:
+            correct_answers += 1
+    
+    print(f"DEBUG: Final score: {correct_answers}/{total_questions}")
+    
+    # Update user progress
+    progress_store.update_user_progress(
+        current_user.username, 
+        slug, 
+        total_questions, 
+        correct_answers
+    )
+    
+    print(f"DEBUG: Progress updated for user {current_user.username}")
+    
+    # Calculate percentage
+    percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+    
+    flash(f'Quiz completed! You scored {correct_answers}/{total_questions} ({percentage:.1f}%)', 'success')
+    return redirect(url_for('main.dashboard'))

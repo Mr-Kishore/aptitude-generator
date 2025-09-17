@@ -9,15 +9,32 @@
             <div class="card-body">
                 <h2 class="card-title mb-4">Practice</h2>
                 {% if questions %}
-                    <form id="mcq-form">
+                    <!-- Progress Info -->
+                    {% if category_progress.questions_attempted > 0 %}
+                    <div class="alert alert-info mb-4">
+                        <h6>Your Progress in this Category:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small>Questions Attempted: <strong>{{ category_progress.questions_attempted }}</strong></small><br>
+                                <small>Correct Answers: <strong>{{ category_progress.questions_correct }}</strong></small>
+                            </div>
+                            <div class="col-md-6">
+                                <small>Accuracy: <strong>{{ "%.1f"|format(category_progress.accuracy_percentage) }}%</strong></small><br>
+                                <small>Completion: <strong>{{ "%.1f"|format(category_progress.completion_percentage) }}%</strong></small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form id="mcq-form" action="{{ url_for('main.submit_practice', slug=slug) }}" method="POST">
                         {% for q in questions %}
-                            {% set q_index = loop.index %}
+                            {% set q_index = loop.index0 %}
                             <div class="mb-4">
                                 <p class="fw-semibold mb-2">{{ loop.index }}. {{ q.question }}</p>
                                 <div class="list-group">
                                     {% for opt in q.options %}
                                         <label class="list-group-item">
-                                            <input class="form-check-input me-1" type="radio" name="q{{ q_index }}" value="{{ opt.key }}">
+                                            <input class="form-check-input me-1" type="radio" name="question_{{ q_index }}" value="{{ opt.key }}">
                                             <span><strong>{{ opt.key }})</strong> {{ opt.text }}</span>
                                         </label>
                                     {% endfor %}
@@ -28,7 +45,8 @@
                             </div>
                         {% endfor %}
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-primary" id="btn-grade">Submit Answers</button>
+                            <button type="button" class="btn btn-primary" id="btn-grade">Check Answers</button>
+                            <button type="submit" class="btn btn-success d-none" id="btn-submit">Submit for Progress</button>
                             <button type="button" class="btn btn-outline-secondary d-none" id="btn-show-answers">Show Answers</button>
                             <a href="{{ url_for('main.practice') }}" class="btn btn-outline-light">Back to Topics</a>
                         </div>
@@ -48,6 +66,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const gradeBtn = document.getElementById('btn-grade');
+    const submitBtn = document.getElementById('btn-submit');
     const showBtn = document.getElementById('btn-show-answers');
     const scoreBox = document.getElementById('score-box');
     const answerDivs = Array.from(document.querySelectorAll('.correct-answer'));
@@ -69,8 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.list-group').forEach(g => g.classList.remove('border','border-danger'));
         for (let i = 0; i < total; i++) {
             const answer = getAnswerForQuestion(i);
-            const group = document.querySelectorAll('input[name="q' + (i+1) + '"]');
-            const chosen = document.querySelector('input[name="q' + (i+1) + '"]:checked');
+            const group = document.querySelectorAll('input[name="question_' + i + '"]');
+            const chosen = document.querySelector('input[name="question_' + i + '"]:checked');
             if (chosen) {
                 answered++;
                 if (chosen.value === answer) correct++;
@@ -84,15 +103,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (answered !== total) {
             scoreBox.classList.replace('alert-info','alert-warning');
             scoreBox.textContent = `Please answer all questions (${answered}/${total}) before viewing answers.`;
-            // keep Show Answers hidden until all answered
+            // keep Show Answers and Submit hidden until all answered
             showBtn?.classList.add('d-none');
+            submitBtn?.classList.add('d-none');
             return;
         }
         scoreBox.classList.remove('alert-warning');
         scoreBox.classList.add('alert-info');
         scoreBox.textContent = `Score: ${correct} / ${total} (${total ? Math.round((correct/total)*100) : 0}%)`;
-        // Reveal Show Answers only after all answers are provided
+        // Reveal Show Answers and Submit only after all answers are provided
         showBtn?.classList.remove('d-none');
+        submitBtn?.classList.remove('d-none');
         scoreBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
