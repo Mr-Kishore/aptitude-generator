@@ -87,18 +87,7 @@ def init_error_handlers(app):
     app.register_error_handler(405, method_not_allowed)
     app.register_error_handler(500, internal_error_handler)
     
-    # Register error handlers for common exceptions
-    from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-    
-    @app.errorhandler(IntegrityError)
-    def handle_integrity_error(e):
-        db.session.rollback()
-        return bad_request('A database integrity error occurred.')
-    
-    @app.errorhandler(SQLAlchemyError)
-    def handle_sqlalchemy_error(e):
-        db.session.rollback()
-        return internal_error('A database error occurred.')
+    # No database-specific error handlers required since the app does not use a DB backend
     
     @app.errorhandler(Exception)
     def handle_generic_exception(e):
