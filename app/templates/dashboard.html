@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - MindForge{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Welcome, {{ user.username }}!</h1>
+            <p class="lead">This is your personal dashboard.</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Your Profile</h5>
+                            <p class="card-text">
+                                <strong>Username:</strong> {{ user.username }}<br>
+                                <strong>Email:</strong> {{ user.email }}<br>
+                                <strong>Member since:</strong> {{ user.created_at.strftime('%B %d, %Y') }}
+                            </p>
+                            <a href="{{ url_for('main.edit_account') }}" class="btn btn-outline-primary">Edit Profile</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Your Progress</h5>
+                            <div class="progress mb-3">
+                                <div class="progress-bar" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100">{{ progress_percent }}%</div>
+                            </div>
+                            <p>You've completed {{ completed_tests }} out of {{ total_tests }} practice tests.</p>
+                            <a href="#" class="btn btn-primary">Continue Practicing</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Recent Activity</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Completed Practice Test #1 - 80%</li>
+                                <li class="list-group-item">Started Quantitative Aptitude Module</li>
+                                <li class="list-group-item">Created an account</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Quick Actions</h5>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('main.practice') }}" target="_blank" class="btn btn-outline-secondary">Start Forging</a>
+                                <a href="#" class="btn btn-outline-secondary">Review Past Results</a>
+                                <a href="#" class="btn btn-outline-secondary">View Study Materials</a>
+                                <a href="#" class="btn btn-outline-secondary">Update Account Settings</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

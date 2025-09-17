@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - MindForge{% endblock %}
+
+{% block content %}
+<section class="hero position-relative text-white">
+    <div class="overlay position-absolute top-0 start-0 w-100 h-100"></div>
+    <div class="container position-relative py-5 text-center">
+        <h1 class="display-4 fw-bold">Where Minds Are Forged into Masters</h1>
+        <p class="lead">Master aptitude tests across 10 specialized domains and forge your path to excellence.</p>
+        <div class="mt-4">
+            <a class="btn btn-primary btn-lg me-2" href="{{ url_for('auth.register') }}" role="button">Get Started</a>
+            <a class="btn btn-outline-light btn-lg me-2" href="{{ url_for('auth.login') }}" role="button">Login</a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.practice') }}" role="button">Start Forging</a>
+        </div>
+    </div>
+</section>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="icon mb-3">🧠</div>
+            <h3>Practice Questions</h3>
+            <p>Access a wide variety of aptitude questions with detailed solutions.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="icon mb-3">📈</div>
+            <h3>Track Progress</h3>
+            <p>Monitor your improvement with detailed analytics and progress tracking.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="icon mb-3">🎯</div>
+            <h3>Learn & Improve</h3>
+            <p>Get personalized recommendations to help you improve your skills.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

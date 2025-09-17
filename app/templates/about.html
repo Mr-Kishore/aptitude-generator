@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}About - MindForge{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="mb-4">About Aptitude Generator</h1>
+            <p class="lead">Aptitude Generator is a platform designed to help you prepare for aptitude tests through practice and learning.</p>
+            
+            <h2 class="mt-5">Our Mission</h2>
+            <p>Our mission is to provide high-quality aptitude test preparation resources to help individuals achieve their career and educational goals.</p>
+            
+            <h2 class="mt-5">Features</h2>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item">Wide variety of aptitude questions</li>
+                <li class="list-group-item">Detailed solutions and explanations</li>
+                <li class="list-group-item">Progress tracking</li>
+                <li class="list-group-item">Personalized recommendations</li>
+                <li class="list-group-item">Mobile-friendly interface</li>
+            </ul>
+            
+            <h2 class="mt-5">Get Started</h2>
+            <p>Ready to improve your aptitude skills? <a href="{{ url_for('auth.register') }}">Create an account</a> and start practicing today!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

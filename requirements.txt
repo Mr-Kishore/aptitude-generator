@@ -1,0 +1,32 @@
+# Core
+Flask==2.3.3
+Werkzeug==2.3.7
+Jinja2==3.1.2
+itsdangerous==2.1.2
+click==8.1.7
+
+# Database removed
+
+# Authentication
+Flask-Login==0.6.2
+Flask-WTF==1.2.1
+email-validator==2.1.0
+
+# Forms
+WTForms==3.0.1
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Development
+Flask-DebugToolbar==0.16.0
+
+# Testing
+pytest==7.4.2
+pytest-cov==4.1.0
+
+# Production
+gunicorn==21.2.0
+whitenoise==6.5.0
+openpyxl==3.1.5
+Markdown==3.6
