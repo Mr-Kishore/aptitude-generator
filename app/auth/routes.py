@@ -6,8 +6,7 @@ This module contains the authentication routes for user registration, login, and
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
-from app.models.user import User
+from app.models.user import User, UserStore, ExcelUserStore
 from . import bp
 
 
@@ -38,10 +37,10 @@ def register():
         elif password != confirm_password:
             errors.append('Passwords do not match.')
         
-        # Check if username or email already exists
-        if User.query.filter_by(username=username).first():
+        # Check if username or email already exists (in-memory)
+        if ExcelUserStore.exists_username(username) or UserStore.exists_username(username):
             errors.append('Username is already taken.')
-        if User.query.filter_by(email=email).first():
+        if ExcelUserStore.exists_email(email) or UserStore.exists_email(email):
             errors.append('Email is already registered.')
         
         if errors:
@@ -49,13 +48,11 @@ def register():
                 flash(error, 'danger')
         else:
             # Create new user
-            user = User(
-                username=username,
-                email=email,
-                password=password
-            )
-            db.session.add(user)
-            db.session.commit()
+            user = User(username=username, email=email, password=password)
+            try:
+                ExcelUserStore.add(user)
+            except Exception:
+                UserStore.add(user)
             login_user(user)
             flash('Registration successful! Welcome to your dashboard.', 'success')
             return redirect(url_for('main.dashboard'))
@@ -74,7 +71,13 @@ def login():
         password = request.form.get('password')
         remember = request.form.get('remember') == 'on'
         
-        user = User.query.filter_by(username=username).first()
+        user = None
+        try:
+            user = ExcelUserStore.get_by_username(username)
+        except Exception:
+            pass
+        if not user:
+            user = UserStore.get_by_username(username)
         
         if user and user.check_password(password):
             login_user(user, remember=remember)

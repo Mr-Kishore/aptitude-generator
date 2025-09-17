@@ -6,40 +6,37 @@ This file contains pytest fixtures and configuration for the test suite.
 import os
 import tempfile
 import pytest
-from app import create_app, db
-from app.models.user import User
+from app import create_app
+from app.models.user import User, ExcelUserStore
 
 
 @pytest.fixture
-def app():
-    """Create and configure a new app instance for testing."""
-    # Create a temporary file to isolate the database for each test
-    db_fd, db_path = tempfile.mkstemp()
-    
-    # Create the app with test configuration
+def app(tmp_path):
+    """Create and configure a new app instance for testing (Excel store)."""
+    # Point ExcelUserStore to a temp file
+    excel_path = tmp_path / 'users.xlsx'
+    original_file = ExcelUserStore.FILE_NAME
+    ExcelUserStore.FILE_NAME = str(excel_path)
+
     app = create_app({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': f'sqlite:///{db_path}',
         'WTF_CSRF_ENABLED': False,
     })
 
-    # Create the database and load test data
+    # Create a test user in the Excel store
     with app.app_context():
-        db.create_all()
-        # Create a test user
-        user = User(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-        db.session.add(user)
-        db.session.commit()
+        user = User(username='testuser', email='test@example.com', password='testpass123')
+        ExcelUserStore.add(user)
 
     yield app
 
-    # Clean up the database after the test
-    os.close(db_fd)
-    os.unlink(db_path)
+    # Restore file name and cleanup
+    ExcelUserStore.FILE_NAME = original_file
+    try:
+        if os.path.exists(str(excel_path)):
+            os.remove(str(excel_path))
+    except Exception:
+        pass
 
 
 @pytest.fixture

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Practice - MindForge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Practice</h2>
+                {% if questions %}
+                    <form id="mcq-form">
+                        {% for q in questions %}
+                            {% set q_index = loop.index %}
+                            <div class="mb-4">
+                                <p class="fw-semibold mb-2">{{ loop.index }}. {{ q.question }}</p>
+                                <div class="list-group">
+                                    {% for opt in q.options %}
+                                        <label class="list-group-item">
+                                            <input class="form-check-input me-1" type="radio" name="q{{ q_index }}" value="{{ opt.key }}">
+                                            <span><strong>{{ opt.key }})</strong> {{ opt.text }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                <div class="mt-2 small text-muted correct-answer d-none" data-answer="{{ q.answer }}">
+                                    Correct answer: <strong>{{ q.answer }}</strong>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" id="btn-grade">Submit Answers</button>
+                            <button type="button" class="btn btn-outline-secondary d-none" id="btn-show-answers">Show Answers</button>
+                            <a href="{{ url_for('main.practice') }}" class="btn btn-outline-light">Back to Topics</a>
+                        </div>
+                    </form>
+                    <div class="alert alert-info mt-3 d-none" id="score-box"></div>
+                {% else %}
+                    <p>No questions found for this topic.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeBtn = document.getElementById('btn-grade');
+    const showBtn = document.getElementById('btn-show-answers');
+    const scoreBox = document.getElementById('score-box');
+    const answerDivs = Array.from(document.querySelectorAll('.correct-answer'));
+
+    function getAnswerForQuestion(idx) {
+        const div = answerDivs[idx];
+        return div ? div.getAttribute('data-answer') : null;
+    }
+
+    function showAnswers() {
+        answerDivs.forEach(d => d.classList.remove('d-none'));
+    }
+
+    gradeBtn?.addEventListener('click', function() {
+        let correct = 0;
+        let total = answerDivs.length;
+        let answered = 0;
+        // Clear previous invalid markers
+        document.querySelectorAll('.list-group').forEach(g => g.classList.remove('border','border-danger'));
+        for (let i = 0; i < total; i++) {
+            const answer = getAnswerForQuestion(i);
+            const group = document.querySelectorAll('input[name="q' + (i+1) + '"]');
+            const chosen = document.querySelector('input[name="q' + (i+1) + '"]:checked');
+            if (chosen) {
+                answered++;
+                if (chosen.value === answer) correct++;
+            } else {
+                // highlight unanswered
+                const list = group.length ? group[0].closest('.list-group') : null;
+                if (list) list.classList.add('border','border-danger');
+            }
+        }
+        scoreBox.classList.remove('d-none');
+        if (answered !== total) {
+            scoreBox.classList.replace('alert-info','alert-warning');
+            scoreBox.textContent = `Please answer all questions (${answered}/${total}) before viewing answers.`;
+            // keep Show Answers hidden until all answered
+            showBtn?.classList.add('d-none');
+            return;
+        }
+        scoreBox.classList.remove('alert-warning');
+        scoreBox.classList.add('alert-info');
+        scoreBox.textContent = `Score: ${correct} / ${total} (${total ? Math.round((correct/total)*100) : 0}%)`;
+        // Reveal Show Answers only after all answers are provided
+        showBtn?.classList.remove('d-none');
+        scoreBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    showBtn?.addEventListener('click', function() {
+        showAnswers();
+    });
+});
+</script>
+{% endblock %}
+
+

@@ -8,22 +8,14 @@ import unittest
 import sys
 from flask import current_app
 from flask.cli import with_appcontext
-from app import db
+from app.models.user import User, UserStore, ExcelUserStore
 
 
 def init_app(app):
     """Register CLI commands with the application."""
-    app.cli.add_command(init_db_command)
+    # Database-related commands removed
     app.cli.add_command(create_admin_command)
     app.cli.add_command(run_tests_command)
-
-
-@click.command('init-db')
-@with_appcontext
-def init_db_command():
-    """Clear the existing data and create new tables."""
-    db.create_all()
-    click.echo('Initialized the database.')
 
 
 @click.command('create-admin')
@@ -39,23 +31,17 @@ def create_admin_command(username, email, password):
         email: Email for the admin
         password: Password for the admin
     """
-    from app.models.user import User
-    
-    # Check if user already exists
-    if User.query.filter_by(username=username).first() is not None:
+    # Check if user already exists (in-memory)
+    if ExcelUserStore.exists_username(username) or UserStore.exists_username(username):
         click.echo(f'User {username} already exists.')
         return
     
     # Create admin user
-    admin = User(
-        username=username,
-        email=email,
-        password=password,
-        is_admin=True
-    )
-    
-    db.session.add(admin)
-    db.session.commit()
+    admin = User(username=username, email=email, password=password, is_admin=True)
+    try:
+        ExcelUserStore.add(admin)
+    except Exception:
+        UserStore.add(admin)
     
     click.echo(f'Created admin user: {username}')
 

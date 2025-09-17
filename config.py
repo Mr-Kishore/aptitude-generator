@@ -16,10 +16,7 @@ class Config:
     DEBUG = False
     TESTING = False
     
-    # Database settings
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance/app.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Database settings removed (no database used)
     
     # Security settings
     WTF_CSRF_ENABLED = os.environ.get('WTF_CSRF_ENABLED', 'true').lower() in ['true', '1', 't']
@@ -56,7 +53,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    SQLALCHEMY_ECHO = True
+    # SQLAlchemy settings removed
     EXPLAIN_TEMPLATE_LOADING = True
     TEMPLATES_AUTO_RELOAD = True
     
@@ -73,8 +70,7 @@ class TestingConfig(Config):
     DEBUG = True
     WTF_CSRF_ENABLED = False
     
-    # Use in-memory SQLite database for tests
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # No database in tests
     
     # Disable CSRF protection in tests
     WTF_CSRF_ENABLED = False

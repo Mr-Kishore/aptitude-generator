@@ -4,8 +4,7 @@ Tests for authentication routes.
 This module contains tests for user authentication functionality.
 """
 import pytest
-from app.models.user import User
-from app import db
+from app.models.user import User, ExcelUserStore
 
 
 def test_register(client, app):
@@ -29,9 +28,9 @@ def test_register(client, app):
     assert response.status_code == 200
     assert b'Registration successful' in response.data
 
-    # Verify user was added to the database
+    # Verify user was added to the Excel store
     with app.app_context():
-        user = User.query.filter_by(username='newuser').first()
+        user = ExcelUserStore.get_by_username('newuser')
         assert user is not None
         assert user.email == 'newuser@example.com'
 
