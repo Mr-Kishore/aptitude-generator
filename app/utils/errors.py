@@ -19,8 +19,13 @@ def error_response(status_code, message=None):
         'status': 'error',
         'code': status_code
     }
-    if message:
-        payload['message'] = message
+    if message is not None:
+        # Ensure message is JSON serializable
+        try:
+            msg = getattr(message, 'description', message)
+        except Exception:
+            msg = message
+        payload['message'] = str(msg)
     
     response = jsonify(payload)
     response.status_code = status_code
@@ -88,6 +93,17 @@ def init_error_handlers(app):
     app.register_error_handler(500, internal_error_handler)
     
     # No database-specific error handlers required since the app does not use a DB backend
+    # CSRF error handler
+    try:
+        from flask_wtf.csrf import CSRFError  # type: ignore
+    except Exception:
+        CSRFError = None  # pragma: no cover
+
+    if CSRFError is not None:
+        @app.errorhandler(CSRFError)
+        def handle_csrf_error(e):
+            # Return a safe JSON response; frontend can handle display
+            return error_response(400, getattr(e, 'description', 'The CSRF token is missing or invalid.'))
     
     @app.errorhandler(Exception)
     def handle_generic_exception(e):
